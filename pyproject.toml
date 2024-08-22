@@ -2,13 +2,15 @@
 name = "platform"
 version = "0.1.0"
 description = "To be discussed."
-authors = ["Simon Antonius Lauer <simon.lauer@posteo.de>"]
+authors = ["Simon Antonius Lauer <simon.lauer@posteo.de>",
+           "Georg Vietzke <georg.vietzke@gmail.com>",
+           "Mohammed Abu Dunya <mohammed.yahia2020@gmail.com>",
+          ]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 django = "^5.1"
-
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.8.0"
