@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "platform"
+version = "0.1.0"
+description = "To be discussed."
+authors = ["Simon Antonius Lauer <simon.lauer@posteo.de>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.1"
+
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.8.0"
+ruff = "^0.6.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
