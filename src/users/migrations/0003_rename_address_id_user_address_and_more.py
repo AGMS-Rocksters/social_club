@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("users", "0002_address_user_email_verified_user_helper_user_seeker_and_more"),
     ]
