@@ -9,6 +9,7 @@ class Address(models.Model):
     def __str__(self):
         return self.city
 
+
 class User(AbstractUser):
     helper = models.BooleanField(default=False)
     seeker = models.BooleanField(default=False)
@@ -20,8 +21,4 @@ class User(AbstractUser):
     )
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
-
-    
-
-
+        return f"{self.first_name} {self.last_name}"
