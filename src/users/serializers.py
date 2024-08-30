@@ -18,8 +18,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        return User.objects.create(
+        user = User(
             username=validated_data.get("username"),
             email=validated_data.get("email"),
-            password=validated_data.get("password"),
         )
+        user.set_password(validated_data.get("password"))
+        user.save()
+        return user
