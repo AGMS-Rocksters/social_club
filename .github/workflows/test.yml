@@ -21,9 +21,9 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: github_actions
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_USER }}
+          POSTGRES_DB: platform
         ports:
           - 5432:5432
         
@@ -57,4 +57,11 @@ jobs:
 
       - name: Run the automated tests (for example)
         run: |
-          source .venv/bin/activate && python src/manage.py test
+          source .venv/bin/activate && cd ./src && python manage.py test
+        env:
+          SECRET_KEY: d@&5_mplo783wr^ftfp3n6fc9!q+75q6ca1a*k@q9#r
+          DB_NAME: platform
+          DB_USER: ${{ env.POSTGRES_USER }}
+          DB_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          DB_HOST: localhost
+          DB_PORT: 5432
