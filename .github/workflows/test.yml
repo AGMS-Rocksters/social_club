@@ -21,8 +21,8 @@ jobs:
       postgres:
         image: postgres:latest
         env:
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_USER }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: platform
         ports:
           - 5432:5432
@@ -59,9 +59,9 @@ jobs:
         run: |
           source .venv/bin/activate && cd ./src && python manage.py test
         env:
-          SECRET_KEY: d@&5_mplo783wr^ftfp3n6fc9!q+75q6ca1a*k@q9#r
+          SECRET_KEY: pir_bol-gbq4u^+%%#dktgi1kfzk0t9q#$a!v7vxwv$&v+o6w
           DB_NAME: platform
-          DB_USER: ${{ env.POSTGRES_USER }}
-          DB_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          DB_USER: postgres
+          DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
