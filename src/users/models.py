@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
 class Address(models.Model):
@@ -8,6 +9,7 @@ class Address(models.Model):
 
     def __str__(self):
         return self.city
+
 
 class User(AbstractUser):
     helper = models.BooleanField(default=False)
@@ -20,8 +22,10 @@ class User(AbstractUser):
     )
 
     def __str__(self):
-        return f'{self.first_name} {self.last_name}'
-
-    
+        return f"{self.first_name} {self.last_name}"
 
 
+class BlacklistedToken(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    token = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
