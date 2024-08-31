@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.test import Client
 from users.models import User
+from django.urls import reverse
 
 
 class TestUserModel(TestCase):
@@ -53,10 +54,12 @@ class TestLogin(TestCase):
             email="test_user@mail.com",
             password="test_user_password",
         )
+        self.login_url = reverse("users:token_obtain_pair")
+        self.login_refresh_url = reverse("users:token_refresh")
 
     def test_login_valid_credentials(self):
         response = self.client.post(
-            "/api/login/",
+            self.login_url,
             {
                 "username": "test_user",
                 "password": "test_user_password",
@@ -68,7 +71,7 @@ class TestLogin(TestCase):
 
     def test_login_invalid_username(self):
         response = self.client.post(
-            "/api/login/",
+            self.login_url,
             {
                 "username": "testuser",
                 "password": "test_user_password",
@@ -83,7 +86,7 @@ class TestLogin(TestCase):
 
     def test_login_invalid_password(self):
         response = self.client.post(
-            "/api/login/",
+            self.login_url,
             {
                 "username": "test_user",
                 "password": "testuserpassword",
@@ -98,7 +101,7 @@ class TestLogin(TestCase):
 
     def test_refresh_valid_key(self):
         response = self.client.post(
-            "/api/login/",
+            self.login_url,
             {
                 "username": "test_user",
                 "password": "test_user_password",
@@ -108,7 +111,7 @@ class TestLogin(TestCase):
         refresh = response.data.get("refresh")
 
         refresh_request = self.client.post(
-            "/api/login/refresh/",
+            self.login_refresh_url,
             data={"refresh": refresh},
         )
 
@@ -118,7 +121,7 @@ class TestLogin(TestCase):
     def test_refresh_invalid_key(self):
         # TODO: add more "types" of token being invalid
         response = self.client.post(
-            "/api/login/",
+            self.login_url,
             {
                 "username": "test_user",
                 "password": "test_user_password",
@@ -131,7 +134,7 @@ class TestLogin(TestCase):
         access = response.data.get("access")
 
         refresh_request = self.client.post(
-            "/api/login/refresh/",
+            self.login_refresh_url,
             data={"refresh": access},
         )
 
@@ -152,10 +155,12 @@ class TestRegistration(TestCase):
             password="test_password",
         )
 
+        self.register_url = reverse("users:register")
+
     # TODO: maybe add check whether received token is a JWT token
     def test_registration(self):
         response = self.client.post(
-            "/api/register/",
+            self.register_url,
             {
                 "username": "test_user",
                 "email": "test_user@mail.com",
@@ -173,7 +178,7 @@ class TestRegistration(TestCase):
 
     def test_registration_different_passwords(self):
         response = self.client.post(
-            "/api/register/",
+            self.register_url,
             {
                 "username": "test_user",
                 "email": "test_user@mail.com",
@@ -190,7 +195,7 @@ class TestRegistration(TestCase):
 
     def test_registration_invalid_email(self):
         response = self.client.post(
-            "/api/register/",
+            self.register_url,
             {
                 "username": "test_user",
                 "email": "test_user@mail",
@@ -207,7 +212,7 @@ class TestRegistration(TestCase):
 
     def test_registration_username_taken(self):
         response = self.client.post(
-            "/api/register/",
+            self.register_url,
             {
                 "username": "test_user2",
                 "email": "test_user@mail.com",
