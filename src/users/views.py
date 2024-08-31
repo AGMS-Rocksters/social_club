@@ -1,9 +1,23 @@
+from rest_framework import permissions, status
 from rest_framework.views import APIView
-from rest_framework import permissions
-from rest_framework import status
 from rest_framework.response import Response
 
-from users.serializers import UserRegisterSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from users.serializers import (
+    CustomObtainPairSerializer,
+    UserRegisterSerializer,
+)
+
+
+class CustomObtainPairView(TokenObtainPairView):
+    """
+    Obtain JWT token pair using a custom serializer
+    that includes the username.
+    """
+
+    permission_classes = [permissions.AllowAny]
+    serializer_class = CustomObtainPairSerializer
 
 
 class UserRegistration(APIView):
