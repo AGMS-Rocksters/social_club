@@ -21,16 +21,19 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from users.views import CustomObtainPairView
 
+from users.views import UserRegistration
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
-        "login/",
+        "api/login/",
         CustomObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
     path(
-        "login/refresh/",
+        "api/login/refresh/",
         TokenRefreshView.as_view(),
         name="token_refresh",
     ),
+    path("api/register/", UserRegistration.as_view()),
 ]
