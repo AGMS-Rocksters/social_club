@@ -269,5 +269,24 @@ class TestUserInfo(TestCase):
             response.data.get("address"),
             None,
         )
-        print(response.status_code)
-        print(response.data)
+
+    def test_user_delete(self):
+        login = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user",
+                "password": "test_user_password",
+            },
+        )
+
+        access = login.data.get("access")
+
+        response = self.client.delete(
+            self.user_url, headers={"Authorization": f"Bearer {access}"}
+        )
+
+        user = User.objects.filter(username="test_user")
+
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
+        self.assertEqual(len(user), 0)
