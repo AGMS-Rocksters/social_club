@@ -226,3 +226,48 @@ class TestRegistration(TestCase):
             str(response.data.get("username")[0]),
             "A user with that username already exists.",
         )
+
+
+class TestUserInfo(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        User.objects.create_user(
+            username="test_user",
+            email="test_user@mail.com",
+            password="test_user_password",
+        )
+        self.user_url = reverse("users:user")
+        self.login_url = reverse("users:token_obtain_pair")
+
+    def test_user_info(self):
+        login = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user",
+                "password": "test_user_password",
+            },
+        )
+
+        access = login.data.get("access")
+
+        response = self.client.get(
+            self.user_url, headers={"Authorization": f"Bearer {access}"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data.get("username"),
+            "test_user",
+        )
+        self.assertEqual(
+            response.data.get("email"),
+            "test_user@mail.com",
+        )
+        self.assertFalse(response.data.get("seeker"))
+        self.assertFalse(response.data.get("helper"))
+        self.assertEqual(
+            response.data.get("address"),
+            None,
+        )
+        print(response.status_code)
+        print(response.data)

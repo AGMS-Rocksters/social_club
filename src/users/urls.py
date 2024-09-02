@@ -23,6 +23,6 @@ urlpatterns = [
     path(
         "",
         UserView.as_view(),
-        name="user_info",
+        name="user",
     ),
 ]
