@@ -18,6 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
+from users.views import LogoutAPIView
 
 from users.views import CustomObtainPairView
 
@@ -33,4 +34,5 @@ urlpatterns = [
         TokenRefreshView.as_view(),
         name="token_refresh",
     ),
+    path("logout/", LogoutAPIView.as_view(), name="logout"),
 ]
