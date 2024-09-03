@@ -1,7 +1,7 @@
 from django.urls import path
 
 from rest_framework_simplejwt.views import TokenRefreshView
-from users.views import CustomObtainPairView, UserRegistration, UserView
+from users.views import CustomObtainPairView, UserRegistration, UserView, LogoutAPIView
 
 
 app_name = "users"
@@ -26,4 +26,5 @@ urlpatterns = [
         UserView.as_view(),
         name="user",
     ),
+    path("logout/", LogoutAPIView.as_view(), name="logout"),
 ]
