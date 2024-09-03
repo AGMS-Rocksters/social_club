@@ -48,9 +48,20 @@ class UserRegistration(APIView):
 
 
 class ChangePasswordView(generics.UpdateAPIView):
-    queryset = User.objects.all()
     serializer_class = ChangePasswordSerializer
-    lookup_field = "id"
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {"message": "Password successfully changed."},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class UserView(APIView):
