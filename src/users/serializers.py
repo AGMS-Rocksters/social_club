@@ -1,7 +1,7 @@
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
-from users.models import User
+from users.models import User, Address
 from rest_framework import serializers
 
 
@@ -65,3 +65,17 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
         instance.set_password(validated_data["password"])
         instance.save()
         return instance
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = ["city", "postal_code"]
+
+
+class UserInfoSerializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "seeker", "helper", "address"]
