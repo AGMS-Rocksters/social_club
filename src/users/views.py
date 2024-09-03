@@ -8,18 +8,6 @@ from users.serializers import (
 )
 
 
-class DeleteUserAPIView(APIView):
-    def delete(self, request, *args, **kwargs):
-        user = request.user
-
-        user.delete()
-
-        return Response(
-            {"message": "Your account has been deleted successfully."},
-            status=status.HTTP_204_NO_CONTENT,
-        )
-
-
 class CustomObtainPairView(TokenObtainPairView):
     """
     Obtain JWT token pair using a custom serializer
@@ -52,3 +40,15 @@ class UserRegistration(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class DeleteUserAPIView(APIView):
+    def delete(self, request, *args, **kwargs):
+        user = request.user
+
+        user.delete()
+
+        return Response(
+            {"message": "Your account has been deleted successfully."},
+            status=status.HTTP_204_NO_CONTENT,
+        )

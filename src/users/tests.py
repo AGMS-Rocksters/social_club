@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.test import Client
 from users.models import User
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
 
 class TestUserModel(TestCase):
@@ -226,3 +227,30 @@ class TestRegistration(TestCase):
             str(response.data.get("username")[0]),
             "A user with that username already exists.",
         )
+
+
+class TestDeleteUser(TestCase):
+    def setUp(self):
+        User = get_user_model()
+
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="password1234",
+            email="testuser@example.com",
+        )
+
+        self.client = Client()
+        self.client.login(username="testuser", password="password1234")
+
+        self.url = reverse("users:delete_user")
+
+    def test_delete_user_successful(self):
+        response = self.client.delete(self.url)
+        User = get_user_model()
+        self.assertEqual(response.status_code, 401)
+        self.assertTrue(User.objects.filter(username="testuser").exists())
+
+    def test_delete_user_unauthenticated(self):
+        self.client.logout()
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, 401)
