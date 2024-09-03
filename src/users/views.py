@@ -49,8 +49,8 @@ class UserRegistration(APIView):
 
 class ChangePasswordView(generics.UpdateAPIView):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ChangePasswordSerializer
+    lookup_field = "id"
 
 
 class UserView(APIView):

@@ -27,7 +27,7 @@ urlpatterns = [
         name="register",
     ),
     path(
-        "change_password/<int:pk>/",
+        "change_password/",
         ChangePasswordView.as_view(),
         name="change_password",
     ),
