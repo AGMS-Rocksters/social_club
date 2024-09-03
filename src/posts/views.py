@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 
 
 class PostList(generics.ListCreateAPIView):
-    """This class defines the create behavior of our rest api."""
+    """This class handles listing and creating posts in our REST API."""
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
@@ -16,14 +16,20 @@ class PostList(generics.ListCreateAPIView):
 
 
 class PostDetail(generics.RetrieveUpdateDestroyAPIView):
-    """This class handles the http GET, PUT and DELETE requests."""
+    """This class handles operations for a single post instance.
+
+    - GET: Retrieve the details of a specific post.
+    - PUT: Update the entire post instance.
+    - PATCH: Partially update the post instance.
+    - DELETE: Remove the specific post instance.
+    """
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
 
 
 class CommentList(generics.ListCreateAPIView):
-    """This class defines the create behavior of our rest api."""
+    """This class handles listing and creating comments for a specific post in our REST API."""
 
     serializer_class = CommentSerializer
 
@@ -38,7 +44,12 @@ class CommentList(generics.ListCreateAPIView):
 
 
 class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
-    """This class handles the http GET, PUT and DELETE requests."""
+    """This class handles retrieving, updating, and deleting a single comment instance.
+
+    - GET: Retrieve a specific comment instance.
+    - PUT/PATCH: Update a specific comment instance.
+    - DELETE: Delete a specific comment instance.
+    """
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer

@@ -48,6 +48,7 @@ class PostTests(APITestCase):
         response = self.client.get(self.post_detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["title"], "Test Post")
+        self.assertEqual(response.data["description"], "This is a test post")
 
     def test_create_post(self):
         # Authenticate the client with JWT
