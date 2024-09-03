@@ -1,29 +1,34 @@
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
-from django.contrib.auth.models import User
-from rest_framework.authtoken.models import Token
+from rest_framework_simplejwt.tokens import RefreshToken
+from users.models import User
 
 
 class LogoutAPIViewTest(APITestCase):
     def setUp(self):
-        self.user = User.objects.create(username="testuser", password="testpassword")
-        self.token = Token.objects.get_or_create(user=self.user)
+        self.user = User.objects.create_user(
+            username="testuser", password="testpassword", email="test@test.com"
+        )
+        self.refresh = RefreshToken.for_user(self.user)
         self.client = APIClient()
-        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token.key)
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {self.refresh.access_token}"
+        )
         self.logout_url = reverse("logout")
 
-    def test_logout_success(self):
-        response = self.client.post(self.logout_url)
-
+    def test_logout(self):
+        response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        # Ensure that the token is deleted
-        with self.assertRaises(Token.DoesNotExist):
-            Token.objects.get(user=self.user)
+    def test_logout_invalid(self):
+        response = self.client.post(self.logout_url, {"refresh": "alkgflg8uz0p3qhgq"})
 
-    def test_logout_unauthenticated(self):
-        self.client.credentials()
-        response = self.client.post(self.logout_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    def test_double_logout(self):
+        response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
