@@ -65,10 +65,14 @@ class User(AbstractUser):
         on_delete=models.CASCADE,
         null=True,
     )
+    following = models.ManyToManyField(
+        to="self",
+        symmetrical=False,
+    )
 
     # USERNAME_FIELD = "email"
 
     objects = CustomUserManager()
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.username}"

@@ -105,7 +105,7 @@ class UserInfoSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ["password"]
+        exclude = ["password", "following"]
         extra_kwargs = {
             "username": {"required": False},
             "email": {"required": False},
@@ -117,3 +117,48 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             setattr(instance, attr, value)
         instance.save()
         return instance
+
+
+class UserFollowSerializer(serializers.Serializer):
+    current_username = serializers.CharField()
+    following_username = serializers.CharField()
+
+    def validate(self, data):
+        current_user = User.objects.get(
+            username=data["current_username"],
+        )
+        # Cannot follow yourself:
+        if data["current_username"] == data["following_username"]:
+            raise serializers.ValidationError(
+                detail="You cannot follow yourself",
+                code=400,
+            )
+
+        # Check whether user exists:
+        try:
+            follow_user = User.objects.get(username=data["following_username"])
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                detail="User does not exist",
+                code=400,
+            )
+
+        # Cannot follow twice:
+        if follow_user in current_user.following.all():
+            raise serializers.ValidationError(
+                detail="Cannot follow twice",
+                code=400,
+            )
+
+        if follow_user:
+            return data
+
+    def save(self):
+        current_user = User.objects.get(
+            username=self.validated_data["current_username"],
+        )
+        following_user = User.objects.get(
+            username=self.validated_data["following_username"],
+        )
+        current_user.following.add(following_user)
+        current_user.save()
