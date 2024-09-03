@@ -1,12 +1,13 @@
-from rest_framework import permissions, status
+from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from rest_framework_simplejwt.views import TokenObtainPairView
-
+from users.models import User
 from users.serializers import (
     CustomObtainPairSerializer,
     UserRegisterSerializer,
+    ChangePasswordSerializer,
 )
 
 
@@ -42,3 +43,9 @@ class UserRegistration(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ChangePasswordSerializer
