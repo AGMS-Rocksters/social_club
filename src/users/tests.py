@@ -298,9 +298,9 @@ class TestChangePassword(TestCase):
         self.client = Client()
 
         self.user = User.objects.create_user(
-            "test_user",
-            "test_user@mail.com",
-            "old_password123",
+            username="test_user",
+            email="test_user@mail.com",
+            password="old_password123",
         )
 
         self.change_password_url = reverse("users:change_password")
