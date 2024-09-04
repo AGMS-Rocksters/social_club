@@ -1,7 +1,8 @@
-from rest_framework import permissions, generics, status
+
+from rest_framework import permissions, status, generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.views import APIView
 from django.http import Http404
 from users.models import User
 
@@ -9,6 +10,7 @@ from users.models import User
 from users.serializers import (
     CustomObtainPairSerializer,
     UserRegisterSerializer,
+    ChangePasswordSerializer,
     UserInfoSerializer,
     LogoutSerializer,
     UserUpdateSerializer,
@@ -58,6 +60,23 @@ class UserRegistration(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(
+            {"message": "Password successfully changed."},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
 
 class UserView(APIView):
