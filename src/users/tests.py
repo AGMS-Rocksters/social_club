@@ -347,7 +347,7 @@ class UserUpdateTestCase(APITestCase):
 
     def test_update_email(self):
         data = {"email": "update@test.com"}
-        response = self.client.put(self.url, data, format="json")
+        response = self.client.patch(self.url, data, format="json")
 
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -357,7 +357,7 @@ class UserUpdateTestCase(APITestCase):
 
     def test_update_empty_request(self):
         data = {}
-        response = self.client.put(self.url, data, format="json")
+        response = self.client.patch(self.url, data, format="json")
 
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -367,7 +367,7 @@ class UserUpdateTestCase(APITestCase):
 
     def test_update_invalid_email(self):
         data = {"email": "notanemail"}
-        response = self.client.put(self.url, data, format="json")
+        response = self.client.patch(self.url, data, format="json")
 
         self.user.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -375,5 +375,5 @@ class UserUpdateTestCase(APITestCase):
     def test_authentication_required(self):
         self.client.credentials()  # Remove the authentication token
         data = {"first_name": "John"}
-        response = self.client.put(self.url, data, format="json")
+        response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
