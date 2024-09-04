@@ -326,6 +326,61 @@ class TestUserInfo(TestCase):
         self.assertEqual(len(user), 0)
 
 
+
+class UserUpdateTestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser5",
+            password="testpassword5",
+            email="testuser5@example.com",
+        )
+
+        response = self.client.post(
+            reverse("users:token_obtain_pair"),
+            {"username": "testuser5", "password": "testpassword5"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.token = response.data["access"]
+
+        self.url = reverse("users:update")
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.token}")
+
+    def test_update_email(self):
+        data = {"email": "update@test.com"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.user.username, "testuser5")
+        self.assertEqual(self.user.email, "update@test.com")
+        self.assertEqual(self.user.first_name, "")
+
+    def test_update_empty_request(self):
+        data = {}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.user.first_name, "")
+        self.assertEqual(self.user.last_name, "")
+        self.assertEqual(self.user.email, "testuser5@example.com")
+
+    def test_update_invalid_email(self):
+        data = {"email": "notanemail"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.user.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_authentication_required(self):
+        self.client.credentials()  # Remove the authentication token
+        data = {"first_name": "John"}
+        response = self.client.patch(self.url, data, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 class TestChangePassword(TestCase):
     def setUp(self):
         self.client = Client()
@@ -398,3 +453,4 @@ class TestChangePassword(TestCase):
             str(response.data["old_password"]["old_password"]),
             "old password is not correct",
         )
+

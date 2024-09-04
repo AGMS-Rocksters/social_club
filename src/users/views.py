@@ -13,6 +13,7 @@ from users.serializers import (
     ChangePasswordSerializer,
     UserInfoSerializer,
     LogoutSerializer,
+    UserUpdateSerializer,
 )
 
 
@@ -100,3 +101,19 @@ class UserView(APIView):
         user = self.get_user(request=request)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserUpdateView(APIView):
+    def patch(self, request):
+        user = request.user
+
+        # Serialize the incoming data, allowing partial updates
+        serializer = UserUpdateSerializer(user, data=request.data)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"msg": "User Account has been updated"}, status=status.HTTP_200_OK
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -9,6 +9,7 @@ from users.views import (
     ChangePasswordView,
     UserView,
     LogoutAPIView,
+    UserUpdateView,
     
 )
 
@@ -41,5 +42,6 @@ urlpatterns = [
         UserView.as_view(),
         name="user",
     ),
+    path("update/", UserUpdateView.as_view(), name="update"),
     path("logout/", LogoutAPIView.as_view(), name="logout"),
 ]

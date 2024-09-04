@@ -100,3 +100,20 @@ class UserInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["username", "email", "seeker", "helper", "address"]
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ["password"]
+        extra_kwargs = {
+            "username": {"required": False},
+            "email": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        # Update only the fields that are present in validated_data
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
