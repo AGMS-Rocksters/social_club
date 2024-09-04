@@ -1,15 +1,18 @@
+
 from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.http import Http404
-
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.http import Http404
 from users.models import User
+
+
 from users.serializers import (
     CustomObtainPairSerializer,
     UserRegisterSerializer,
     ChangePasswordSerializer,
     UserInfoSerializer,
+    LogoutSerializer,
 )
 
 
@@ -21,6 +24,17 @@ class CustomObtainPairView(TokenObtainPairView):
 
     permission_classes = [permissions.AllowAny]
     serializer_class = CustomObtainPairSerializer
+
+
+class LogoutAPIView(generics.GenericAPIView):
+    serializer_class = LogoutSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserRegistration(APIView):

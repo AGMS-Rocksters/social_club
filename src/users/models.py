@@ -42,6 +42,11 @@ class CustomUserManager(BaseUserManager):
             **extra_fields,
         )
 
+    def create(self, username, email, password, **extra_fields):
+        user = self.create_user(username, email, password, **extra_fields)
+
+        return user
+
 
 class Address(models.Model):
     city = models.CharField(max_length=128)
