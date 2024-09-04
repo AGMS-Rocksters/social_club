@@ -59,6 +59,7 @@ class ChangePasswordSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"old_password": "old password is not correct"}
             )
+
         return data
 
     def update(self, instance, validated_data):
