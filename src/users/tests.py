@@ -7,6 +7,7 @@ from django.test import TestCase
 from django.test import Client
 
 
+
 class LogoutAPIViewTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -34,6 +35,7 @@ class LogoutAPIViewTest(APITestCase):
 
         response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 
 class TestUserModel(TestCase):
@@ -322,3 +324,77 @@ class TestUserInfo(TestCase):
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, None)
         self.assertEqual(len(user), 0)
+
+
+class TestChangePassword(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username="test_user",
+            email="test_user@mail.com",
+            password="old_password123",
+        )
+
+        self.change_password_url = reverse("users:change_password")
+        self.login_url = reverse("users:token_obtain_pair")
+
+        response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user",
+                "password": "old_password123",
+            },
+        )
+        self.access_token = response.data.get("access")
+
+    def test_change_password_success(self):
+        data = {
+            "old_password": "old_password123",
+            "password": "new_password456",
+            "password2": "new_password456",
+        }
+
+        response = self.client.put(
+            self.change_password_url,
+            data,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.data.get("message"), "Password successfully changed.")
+
+        self.client.logout()
+        response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user",
+                "password": "new_password456",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue("access" in response.data.keys())
+
+    def test_change_password_wrong_old_password(self):
+        data = {
+            "old_password": "wrong_password",
+            "password": "new_password456",
+            "password2": "new_password456",
+        }
+
+        response = self.client.put(
+            self.change_password_url,
+            data,
+            content_type="application/json",
+            HTTP_AUTHORIZATION=f"Bearer {self.access_token}",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertIn("old_password", response.data)
+
+        self.assertEqual(
+            str(response.data["old_password"]["old_password"]),
+            "old password is not correct",
+        )
