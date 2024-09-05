@@ -65,3 +65,6 @@ jobs:
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          DEBUG: "True"
+          HOST_IP: localhost
+          STATIC_ROOT: /static
