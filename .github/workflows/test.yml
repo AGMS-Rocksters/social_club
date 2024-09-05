@@ -53,7 +53,7 @@ jobs:
           key: venv-${{ hashFiles('poetry.lock') }}
 
       - name: Install the project dependencies
-        run: poetry install --no-root
+        run: poetry install --no-root --without dev
 
       - name: Run the automated tests (for example)
         run: |
@@ -65,3 +65,6 @@ jobs:
           DB_PASSWORD: postgres
           DB_HOST: localhost
           DB_PORT: 5432
+          DEBUG: "True"
+          HOST_IP: localhost
+          STATIC_ROOT: /static
