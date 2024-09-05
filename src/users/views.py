@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.views import APIView
 from django.http import Http404
 from users.models import User
+from drf_spectacular.utils import extend_schema
 
 
 from users.serializers import (
@@ -38,6 +39,7 @@ class LogoutAPIView(generics.GenericAPIView):
 class UserRegistration(APIView):
     permission_classes = [permissions.AllowAny]
 
+    @extend_schema(responses=UserRegisterSerializer)
     def post(self, request, *args, **kwargs):
         """
         User registration.
@@ -64,12 +66,14 @@ class UserView(APIView):
     Retrieve information about currently authenticated user.
     """
 
+    @extend_schema(responses=UserInfoSerializer)
     def get_user(self, request):
         try:
             return User.objects.get(pk=request.user.id)
         except User.DoesNotExist:
             return Http404
 
+    @extend_schema(responses=UserInfoSerializer)
     def get(self, request, format=None):
         user = self.get_user(request=request)
 
@@ -77,6 +81,7 @@ class UserView(APIView):
 
         return Response(serializer.data)
 
+    @extend_schema(responses=UserInfoSerializer)
     def delete(self, request, format=None):
         user = self.get_user(request=request)
         user.delete()

@@ -18,26 +18,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-
-schema_view = get_schema_view(
-    openapi.Info(
-        title="Social Platform API",
-        default_version="1.0.0",
-        description="API documentation",
-    ),
-    public=True,
-)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(
-        "swagger/schema/",
-        schema_view.with_ui("swagger", chache_timeout=0),
-        name="swagger_schema",
-    ),
     path("api/users/", include("users.urls", namespace="users")),
     path("api/posts/", include("posts.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path(
+        "api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger"
+    ),
 ]
