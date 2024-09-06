@@ -9,6 +9,7 @@ In `src/` create an `.env` file with the following keys:
 - DB_HOST
 - DB_PORT
 - STATIC_ROOT (where static files are ought to be stored)
-- HOST_IP (server IP address)
+- HOSTNAMES
+- DEBUG (False or True)
 
-Hint: make sure that the directory for static files exists.
+Hint: make sure that the directory for static files exists if you intent to collect static files.
