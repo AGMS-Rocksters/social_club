@@ -10,9 +10,8 @@ from users.views import (
     UserView,
     LogoutAPIView,
     UserUpdateView,
-    
+    UserFollowView,
 )
-
 
 
 app_name = "users"
@@ -42,6 +41,7 @@ urlpatterns = [
         UserView.as_view(),
         name="user",
     ),
+    path("follow/", UserFollowView.as_view(), name="follow"),
     path("update/", UserUpdateView.as_view(), name="update"),
     path("logout/", LogoutAPIView.as_view(), name="logout"),
 ]
