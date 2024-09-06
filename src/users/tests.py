@@ -7,7 +7,6 @@ from django.test import TestCase
 from django.test import Client
 
 
-
 class LogoutAPIViewTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
@@ -35,7 +34,6 @@ class LogoutAPIViewTest(APITestCase):
 
         response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
 
 class TestUserModel(TestCase):
@@ -326,13 +324,18 @@ class TestUserInfo(TestCase):
         self.assertEqual(len(user), 0)
 
 
-
 class UserUpdateTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser5",
             password="testpassword5",
             email="testuser5@example.com",
+        )
+
+        self.user2 = User.objects.create_user(
+            username="otheruser",
+            password="otherpassword",
+            email="otheruser@example.com",
         )
 
         response = self.client.post(
@@ -358,6 +361,20 @@ class UserUpdateTestCase(APITestCase):
         self.assertEqual(self.user.email, "update@test.com")
         self.assertEqual(self.user.first_name, "")
 
+    def test_update_existing_username(self):
+        data = {"username": "otheruser"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+
+    def test_update_existing_email(self):
+        data = {"email": "otheruser@example.com"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
     def test_update_empty_request(self):
         data = {}
         response = self.client.patch(self.url, data, format="json")
@@ -380,6 +397,7 @@ class UserUpdateTestCase(APITestCase):
         data = {"first_name": "John"}
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class TestChangePassword(TestCase):
     def setUp(self):
@@ -453,4 +471,3 @@ class TestChangePassword(TestCase):
             str(response.data["old_password"]["old_password"]),
             "old password is not correct",
         )
-

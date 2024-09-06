@@ -65,6 +65,7 @@ class User(AbstractUser):
         on_delete=models.CASCADE,
         null=True,
     )
+    email = models.EmailField(unique=True, blank=True, verbose_name="email address")
 
     # USERNAME_FIELD = "email"
 
