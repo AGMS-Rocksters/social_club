@@ -29,6 +29,7 @@ if debug == "False":
 else:
     DEBUG = True
 
+
 # Allowed Hosts:
 if DEBUG:
     ALLOWED_HOSTS = []
