@@ -476,7 +476,6 @@ class TestChangePassword(TestCase):
         )
 
 
-
 class TestUserFollow(TestCase):
     def setUp(self):
         self.client = Client()
@@ -489,7 +488,7 @@ class TestUserFollow(TestCase):
 
         User.objects.create_user(
             username="test_user_two",
-            email="test_user_three@mail.com",
+            email="test_user_two@mail.com",
             password="test_user_password",
         )
 
@@ -695,4 +694,3 @@ class TestUserFollow(TestCase):
             follow_response.data.get("msg"),
             "Cannot change followers for other users",
         )
-
