@@ -33,7 +33,7 @@ else:
 if DEBUG:
     ALLOWED_HOSTS = []
 else:
-    ALLOWED_HOSTS = [os.environ.get("HOST_IP")]
+    ALLOWED_HOSTS = os.environ.get("HOSTNAMES").split(",")
 
 # Custom User Model
 AUTH_USER_MODEL = "users.User"
