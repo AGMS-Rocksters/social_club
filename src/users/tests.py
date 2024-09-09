@@ -335,6 +335,12 @@ class UserUpdateTestCase(APITestCase):
             email="testuser5@example.com",
         )
 
+        self.user2 = User.objects.create_user(
+            username="otheruser",
+            password="otherpassword",
+            email="otheruser@example.com",
+        )
+
         response = self.client.post(
             reverse("users:token_obtain_pair"),
             {"username": "testuser5", "password": "testpassword5"},
@@ -357,6 +363,20 @@ class UserUpdateTestCase(APITestCase):
         self.assertEqual(self.user.username, "testuser5")
         self.assertEqual(self.user.email, "update@test.com")
         self.assertEqual(self.user.first_name, "")
+
+    def test_update_existing_username(self):
+        data = {"username": "otheruser"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+
+    def test_update_existing_email(self):
+        data = {"email": "otheruser@example.com"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
 
     def test_update_empty_request(self):
         data = {}
@@ -468,7 +488,7 @@ class TestUserFollow(TestCase):
 
         User.objects.create_user(
             username="test_user_two",
-            email="test_user_three@mail.com",
+            email="test_user_two@mail.com",
             password="test_user_password",
         )
 
