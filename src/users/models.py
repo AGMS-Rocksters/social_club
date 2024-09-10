@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 
+import uuid
+
 
 class CustomUserManager(BaseUserManager):
     """
@@ -57,6 +59,7 @@ class Address(models.Model):
 
 
 class User(AbstractUser):
+    uid = models.UUIDField(default=uuid.uuid4(), editable=False)
     helper = models.BooleanField(default=False)
     seeker = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
@@ -71,7 +74,6 @@ class User(AbstractUser):
         to="self",
         symmetrical=False,
     )
-
 
     # USERNAME_FIELD = "email"
 

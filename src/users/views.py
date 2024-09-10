@@ -5,6 +5,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.http import Http404
 from users.models import User
 
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+from users.tokens import account_activation_token
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+
 
 from users.serializers import (
     CustomObtainPairSerializer,
@@ -14,6 +20,7 @@ from users.serializers import (
     LogoutSerializer,
     UserUpdateSerializer,
     UserFollowSerializer,
+    EmailTokenSerializer,
 )
 
 
@@ -134,3 +141,59 @@ class UserFollowView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmailVerification(APIView):
+    def get(self, request):
+        """Send out verification email including a random token"""
+        if not request.user.email_verified:
+            user = request.user
+            email = request.user.email
+            subject = "Verify Email"
+            message = render_to_string(
+                "users/verify_email_message.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "token": account_activation_token.make_token(user),
+                    "uid": urlsafe_base64_encode(force_bytes(user.uid)),
+                },
+            )
+            email = EmailMessage(
+                subject,
+                message,
+                to=[email],
+                from_email="simon.lauer@posteo.de",
+            )
+            email.content_subtype = "html"
+            email.send()
+            return Response(
+                {"msg": "Email verification link sent"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"msg": "Email already verified"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    def put(self, request):
+        """If valid token, set email_verified to True"""
+        if not request.user.email_verified:
+            serializer = EmailTokenSerializer(
+                data=request.data,
+                context={"request": request},
+            )
+            if serializer.is_valid():
+                user = request.user
+                user.email_verified = True
+                user.save()
+                return Response(
+                    {"msg": "Verification successful"},
+                    status=status.HTTP_200_OK,
+                )
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"msg": "Email already verified"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
