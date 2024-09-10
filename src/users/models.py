@@ -71,4 +71,8 @@ class User(AbstractUser):
     objects = CustomUserManager()
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        # If the user has a first and last name, return the full name.
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        # Otherwise, return the username.
+        return self.username

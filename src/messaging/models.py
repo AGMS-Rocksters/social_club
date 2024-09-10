@@ -60,6 +60,9 @@ class Communication(models.Model):
         """
         return self.from_user == user or self.to_user == user
 
+    def __str__(self) -> str:
+        return self.status
+
 
 class Message(models.Model):
     """The Message model represents a message sent within a communication."""
