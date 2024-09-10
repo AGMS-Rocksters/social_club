@@ -293,8 +293,6 @@ class MessageTests(APITestCase):
             Message.objects.last().msg, "Updated message for communication2"
         )
 
-    # not working
-
     def test_update_message_as_non_author(self):
         # Authenticate as user2, who is not the author of message2
         self.set_jwt_authentication(self.user2)
@@ -314,8 +312,6 @@ class MessageTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         # Ensure message2 is deleted
         self.assertEqual(Message.objects.count(), 1)
-
-    # not working
 
     def test_delete_message_as_non_author(self):
         # Authenticate as user2, who is not the author of message2
