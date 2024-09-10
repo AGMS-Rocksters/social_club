@@ -59,7 +59,7 @@ class MessageDetail(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         """
-        Retrieve the object. Override to check permissions for GET request.
+        Retrieve the message and ensure the requesting user is a participant in the communication.
         """
         obj = super().get_object()
         if not obj.communication.is_participant(self.request.user):

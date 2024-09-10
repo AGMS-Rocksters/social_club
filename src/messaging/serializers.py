@@ -25,6 +25,7 @@ class MessageSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """Custom create method to handle logic for associating the current user."""
         user = self.context["request"].user
+        validated_data.pop("user", None)  # Ensure 'user' is not in validated_data
         return Message.objects.create(user=user, **validated_data)
 
 
