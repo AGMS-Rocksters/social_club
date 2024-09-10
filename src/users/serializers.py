@@ -185,10 +185,10 @@ class EmailTokenSerializer(serializers.Serializer):
         if self.user.email_verified is not False:
             raise serializers.ValidationError(detail="Email already verified")
 
-        if self.user is not None and account_activation_token.check_token(
-            self.user, token
-        ):
+        if account_activation_token.check_token(self.user, token):
             return data
+        else:
+            raise serializers.ValidationError(detail="Invalid token")
 
     def save(self):
         self.user.email_verified = True
