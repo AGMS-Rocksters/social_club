@@ -175,18 +175,21 @@ class EmailTokenSerializer(serializers.Serializer):
     def validate(self, data):
         uidb64 = data.get("uid")
         token = data.get("token")
-        request = self.context.get("request")
-        user_from_request = request.user
 
-        # validate uid
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(uid=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-            user = None
+            self.user = User.objects.get(uid=uid)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(detail="User not found")
 
-        if user != user_from_request:
-            user = None
+        if self.user.email_verified is not False:
+            raise serializers.ValidationError(detail="Email already verified")
 
-        if user is not None and account_activation_token.check_token(user, token):
+        if self.user is not None and account_activation_token.check_token(
+            self.user, token
+        ):
             return data
+
+    def save(self):
+        self.user.email_verified = True
+        self.user.save()

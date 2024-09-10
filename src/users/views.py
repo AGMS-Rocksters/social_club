@@ -8,8 +8,8 @@ from users.models import User
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from users.tokens import account_activation_token
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 
 from users.serializers import (
@@ -144,8 +144,15 @@ class UserFollowView(APIView):
 
 
 class EmailVerification(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
         """Send out verification email including a random token"""
+        if not request.user.is_authenticated:
+            return Response(
+                data={"msg": "Not logged in"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if not request.user.email_verified:
             user = request.user
             email = request.user.email
@@ -178,22 +185,13 @@ class EmailVerification(APIView):
 
     def put(self, request):
         """If valid token, set email_verified to True"""
-        if not request.user.email_verified:
-            serializer = EmailTokenSerializer(
-                data=request.data,
-                context={"request": request},
-            )
-            if serializer.is_valid():
-                user = request.user
-                user.email_verified = True
-                user.save()
-                return Response(
-                    {"msg": "Verification successful"},
-                    status=status.HTTP_200_OK,
-                )
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(
-            {"msg": "Email already verified"},
-            status=status.HTTP_400_BAD_REQUEST,
+        serializer = EmailTokenSerializer(
+            data=request.data,
         )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"msg": "Verification successful"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(status=status.HTTP_400_BAD_REQUEST)
