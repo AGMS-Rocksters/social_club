@@ -108,7 +108,7 @@ class UserUpdateView(APIView):
         user = request.user
 
         # Serialize the incoming data, allowing partial updates
-        serializer = UserUpdateSerializer(user, data=request.data)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
