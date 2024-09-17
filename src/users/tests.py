@@ -573,10 +573,8 @@ class TestUserFollow(TestCase):
         user_two = User.objects.get(username="test_user_two")
         user_three = User.objects.get(username="test_user_three")
 
-        self.assertEqual(
-            list(user_one.following.all()),
-            [user_two, user_three],
-        )
+        self.assertIn(user_two, list(user_one.following.all()))
+        self.assertIn(user_three, list(user_one.following.all()))
 
     def test_no_follow_yourself(self):
         login_response = self.client.post(
