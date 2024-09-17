@@ -48,10 +48,29 @@ class Communication(models.Model):
         """
         return self.status == "accepted"
 
+    def is_participant(self, user):
+        """
+        Check if the given user is a participant in this communication.
+
+        Args:
+        - user (User): The user to check.
+
+        Returns:
+        - bool: True if the user is either the from_user or to_user, False otherwise.
+        """
+        return self.from_user == user or self.to_user == user
+
+    def __str__(self) -> str:
+        return self.status
+
 
 class Message(models.Model):
     """The Message model represents a message sent within a communication."""
 
     communication = models.ForeignKey(Communication, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name="messages", on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     msg = models.TextField()
+
+    def __str__(self):
+        return f"Message from {self.user.username} at {self.created_at}"
