@@ -13,6 +13,8 @@ The application requires a PostgreSQL database server to function properly (for 
 In `src/` create an `.env` file with the following keys:
 
 - SECRET_KEY (django secret key)
+- SENDGRID_API_KEY (we use sendgrid as our email service)
+- DEFAULT_FROM_EMAIL (verified email address on sendgrid)
 - DB_NAME (database name)
 - DB_USER (database user)
 - DB_PASSWORD (database user password)
