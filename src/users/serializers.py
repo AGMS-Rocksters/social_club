@@ -5,6 +5,10 @@ from rest_framework import serializers
 
 from users.models import User, Address
 
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from users.tokens import account_activation_token
+
 
 class CustomObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -162,3 +166,30 @@ class UserFollowSerializer(serializers.Serializer):
         )
         current_user.following.add(following_user)
         current_user.save()
+
+
+class EmailTokenSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    uid = serializers.CharField()
+
+    def validate(self, data):
+        uidb64 = data.get("uid")
+        token = data.get("token")
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            self.user = User.objects.get(uid=uid)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(detail="User not found")
+
+        if self.user.email_verified is not False:
+            raise serializers.ValidationError(detail="Email already verified")
+
+        if account_activation_token.check_token(self.user, token):
+            return data
+        else:
+            raise serializers.ValidationError(detail="Invalid token")
+
+    def save(self):
+        self.user.email_verified = True
+        self.user.save()

@@ -11,6 +11,7 @@ from users.views import (
     LogoutAPIView,
     UserUpdateView,
     UserFollowView,
+    EmailVerification,
 )
 
 
@@ -44,4 +45,5 @@ urlpatterns = [
     path("follow/", UserFollowView.as_view(), name="follow"),
     path("update/", UserUpdateView.as_view(), name="update"),
     path("logout/", LogoutAPIView.as_view(), name="logout"),
+    path("verify/", EmailVerification.as_view(), name="verify_email"),
 ]

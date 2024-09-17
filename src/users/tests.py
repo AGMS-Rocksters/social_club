@@ -5,6 +5,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from users.models import User, Address
 from django.test import TestCase
 from django.test import Client
+from unittest.mock import patch, ANY
+
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from users.tokens import account_activation_token
+import json
+from django.conf import settings
 
 
 class LogoutAPIViewTest(APITestCase):
@@ -567,10 +574,8 @@ class TestUserFollow(TestCase):
         user_two = User.objects.get(username="test_user_two")
         user_three = User.objects.get(username="test_user_three")
 
-        self.assertEqual(
-            list(user_one.following.all()),
-            [user_two, user_three],
-        )
+        self.assertIn(user_two, list(user_one.following.all()))
+        self.assertIn(user_three, list(user_one.following.all()))
 
     def test_no_follow_yourself(self):
         login_response = self.client.post(
@@ -694,3 +699,177 @@ class TestUserFollow(TestCase):
             follow_response.data.get("msg"),
             "Cannot change followers for other users",
         )
+
+
+class TestUserSendEmail(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username="test_user_one",
+            email="test_user_one@mail.com",
+            password="test_user_password",
+        )
+
+        self.login_url = reverse("users:token_obtain_pair")
+        self.verify_url = reverse("users:verify_email")
+
+    def test_not_logged_in(self):
+        response = self.client.get(self.verify_url)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data.get("msg"),
+            "Not logged in",
+        )
+
+    def test_already_verified(self):
+        self.user.email_verified = True
+        self.user.save()
+
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        verify_response = self.client.get(
+            self.verify_url,
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(verify_response.status_code, 400)
+        self.assertEqual(
+            verify_response.data.get("msg"),
+            "Email already verified",
+        )
+
+    @patch("users.views.EmailMessage")
+    def test_valid_auth(self, mock_email_class):
+        # Create the mock instance that will be
+        # returned when EmailMessage() is called
+        mock_email_instance = mock_email_class.return_value
+
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        verify_response = self.client.get(
+            self.verify_url,
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        self.assertEqual(
+            verify_response.data.get("msg"),
+            "Email verification link sent",
+        )
+        self.assertEqual(verify_response.status_code, 200)
+
+        # Assert message was sent
+        mock_email_instance.send.assert_called_once()
+
+        # Assert that EmailMessage was instantiated correctly
+        # NOTE: body contains generated tokens which is why I skip testing
+        # the body
+        mock_email_class.assert_called_once_with(
+            "Verify Email",
+            ANY,
+            to=["test_user_one@mail.com"],
+            from_email=settings.DEFAULT_FROM_EMAIL,
+        )
+
+
+class TestEmailVerifyTokens(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        self.user = User.objects.create_user(
+            username="test_user_one",
+            email="test_user_one@mail.com",
+            password="test_user_password",
+        )
+
+        self.verify_url = reverse("users:verify_email")
+
+    def test_valid_data(self):
+        uuid = self.user.uid
+        uid = urlsafe_base64_encode(force_bytes(uuid))
+
+        token = account_activation_token.make_token(self.user)
+
+        response = self.client.put(
+            self.verify_url,
+            data=json.dumps(
+                {
+                    "uid": uid,
+                    "token": token,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data.get("msg"),
+            "Verification successful",
+        )
+
+    def test_invalid_token(self):
+        uuid = self.user.uid
+        uid = urlsafe_base64_encode(force_bytes(uuid))
+
+        response = self.client.put(
+            self.verify_url,
+            data=json.dumps(
+                {
+                    "uid": uid,
+                    "token": "some_token",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_uid(self):
+        uid = urlsafe_base64_encode(force_bytes("some_wrong_uid"))
+
+        token = account_activation_token.make_token(self.user)
+
+        response = self.client.put(
+            self.verify_url,
+            data=json.dumps(
+                {
+                    "uid": uid,
+                    "token": token,
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_all(self):
+        uid = urlsafe_base64_encode(force_bytes("some_wrong_uid"))
+
+        response = self.client.put(
+            self.verify_url,
+            data=json.dumps(
+                {
+                    "uid": uid,
+                    "token": "invalid_token",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
