@@ -65,6 +65,13 @@ class User(AbstractUser):
         on_delete=models.CASCADE,
         null=True,
     )
+    email = models.EmailField(unique=True, blank=True, verbose_name="email address")
+
+    following = models.ManyToManyField(
+        to="self",
+        symmetrical=False,
+    )
+
 
     # USERNAME_FIELD = "email"
 
@@ -76,3 +83,4 @@ class User(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         # Otherwise, return the username.
         return self.username
+

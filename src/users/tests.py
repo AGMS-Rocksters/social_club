@@ -2,10 +2,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
-from users.models import User
+from users.models import User, Address
 from django.test import TestCase
 from django.test import Client
-
 
 
 class LogoutAPIViewTest(APITestCase):
@@ -35,7 +34,6 @@ class LogoutAPIViewTest(APITestCase):
 
         response = self.client.post(self.logout_url, {"refresh": str(self.refresh)})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
 
 class TestUserModel(TestCase):
@@ -266,10 +264,13 @@ class TestUserInfo(TestCase):
     def setUp(self):
         self.client = Client()
 
+        address = Address.objects.create(city="New York", postal_code="12345")
+
         User.objects.create_user(
             username="test_user",
             email="test_user@mail.com",
             password="test_user_password",
+            address=address,
         )
         self.user_url = reverse("users:user")
         self.login_url = reverse("users:token_obtain_pair")
@@ -301,7 +302,7 @@ class TestUserInfo(TestCase):
         self.assertFalse(response.data.get("helper"))
         self.assertEqual(
             response.data.get("address"),
-            None,
+            {"city": "New York", "postal_code": "12345"},
         )
 
     def test_user_delete(self):
@@ -326,13 +327,18 @@ class TestUserInfo(TestCase):
         self.assertEqual(len(user), 0)
 
 
-
 class UserUpdateTestCase(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username="testuser5",
             password="testpassword5",
             email="testuser5@example.com",
+        )
+
+        self.user2 = User.objects.create_user(
+            username="otheruser",
+            password="otherpassword",
+            email="otheruser@example.com",
         )
 
         response = self.client.post(
@@ -358,6 +364,20 @@ class UserUpdateTestCase(APITestCase):
         self.assertEqual(self.user.email, "update@test.com")
         self.assertEqual(self.user.first_name, "")
 
+    def test_update_existing_username(self):
+        data = {"username": "otheruser"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+
+    def test_update_existing_email(self):
+        data = {"email": "otheruser@example.com"}
+        response = self.client.patch(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+
     def test_update_empty_request(self):
         data = {}
         response = self.client.patch(self.url, data, format="json")
@@ -380,6 +400,7 @@ class UserUpdateTestCase(APITestCase):
         data = {"first_name": "John"}
         response = self.client.patch(self.url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
 
 class TestChangePassword(TestCase):
     def setUp(self):
@@ -454,3 +475,222 @@ class TestChangePassword(TestCase):
             "old password is not correct",
         )
 
+
+class TestUserFollow(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        User.objects.create_user(
+            username="test_user_one",
+            email="test_user_one@mail.com",
+            password="test_user_password",
+        )
+
+        User.objects.create_user(
+            username="test_user_two",
+            email="test_user_two@mail.com",
+            password="test_user_password",
+        )
+
+        User.objects.create_user(
+            username="test_user_three",
+            email="test_user_three@mail.com",
+            password="test_user_password",
+        )
+
+        self.login_url = reverse("users:token_obtain_pair")
+        self.user_follow_url = reverse("users:follow")
+
+    def test_follow_one(self):
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_two",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        self.assertEqual(follow_response.status_code, 200)
+
+        user_one = User.objects.get(username="test_user_one")
+        user_two = User.objects.get(username="test_user_two")
+
+        self.assertEqual(
+            list(user_one.following.all()),
+            [user_two],
+        )
+
+    def test_follow_many(self):
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_two",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(follow_response.status_code, 200)
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_three",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(follow_response.status_code, 200)
+
+        user_one = User.objects.get(username="test_user_one")
+        user_two = User.objects.get(username="test_user_two")
+        user_three = User.objects.get(username="test_user_three")
+
+        self.assertEqual(
+            list(user_one.following.all()),
+            [user_two, user_three],
+        )
+
+    def test_no_follow_yourself(self):
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_one",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(
+            str(follow_response.data.get("non_field_errors")[0]),
+            "You cannot follow yourself",
+        )
+
+        self.assertEqual(follow_response.status_code, 400)
+
+    def test_no_follow_twice(self):
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_two",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_two",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(
+            str(follow_response.data.get("non_field_errors")[0]),
+            "Cannot follow twice",
+        )
+
+        self.assertEqual(follow_response.status_code, 400)
+
+    def test_follow_user_not_found(self):
+        login_response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = login_response.data.get("access")
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_four",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        self.assertEqual(
+            str(follow_response.data.get("non_field_errors")[0]),
+            "User does not exist",
+        )
+
+        self.assertEqual(follow_response.status_code, 400)
+
+    def test_follow_imposter(self):
+        response = self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_two",
+                "password": "test_user_password",
+            },
+        )
+
+        access_token = response.data.get("access")
+
+        self.client.post(
+            self.login_url,
+            {
+                "username": "test_user_one",
+                "password": "test_user_password",
+            },
+        )
+
+        follow_response = self.client.post(
+            self.user_follow_url,
+            {
+                "current_username": "test_user_one",
+                "following_username": "test_user_two",
+            },
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        self.assertEqual(follow_response.status_code, 400)
+        self.assertEqual(
+            follow_response.data.get("msg"),
+            "Cannot change followers for other users",
+        )

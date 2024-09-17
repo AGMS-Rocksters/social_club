@@ -1,4 +1,3 @@
-
 from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +13,7 @@ from users.serializers import (
     UserInfoSerializer,
     LogoutSerializer,
     UserUpdateSerializer,
+    UserFollowSerializer,
 )
 
 
@@ -108,7 +108,7 @@ class UserUpdateView(APIView):
         user = request.user
 
         # Serialize the incoming data, allowing partial updates
-        serializer = UserUpdateSerializer(user, data=request.data)
+        serializer = UserUpdateSerializer(user, data=request.data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -116,4 +116,21 @@ class UserUpdateView(APIView):
                 {"msg": "User Account has been updated"}, status=status.HTTP_200_OK
             )
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserFollowView(APIView):
+    def post(self, request):
+        if request.user.username != request.data.get("current_username"):
+            return Response(
+                {"msg": "Cannot change followers for other users"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = UserFollowSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {"msg": "User successful added to followed users"},
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
