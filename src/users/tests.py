@@ -11,6 +11,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from users.tokens import account_activation_token
 import json
+from django.conf import settings
 
 
 class LogoutAPIViewTest(APITestCase):
@@ -783,7 +784,7 @@ class TestUserSendEmail(TestCase):
             "Verify Email",
             ANY,
             to=["test_user_one@mail.com"],
-            from_email="simon.lauer@posteo.de",
+            from_email=settings.DEFAULT_FROM_EMAIL,
         )
 
 
