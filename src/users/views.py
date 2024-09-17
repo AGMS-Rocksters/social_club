@@ -10,6 +10,7 @@ from django.template.loader import render_to_string
 from users.tokens import account_activation_token
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from django.conf import settings
 
 
 from users.serializers import (
@@ -170,7 +171,7 @@ class EmailVerification(APIView):
                 subject,
                 message,
                 to=[email],
-                from_email="simon.lauer@posteo.de",
+                from_email=settings.DEFAULT_FROM_EMAIL,
             )
             email.content_subtype = "html"
             email.send()

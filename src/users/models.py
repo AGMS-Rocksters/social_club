@@ -59,7 +59,7 @@ class Address(models.Model):
 
 
 class User(AbstractUser):
-    uid = models.UUIDField(default=uuid.uuid4(), editable=False)
+    uid = models.UUIDField(default=uuid.uuid4, editable=False)
     helper = models.BooleanField(default=False)
     seeker = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
