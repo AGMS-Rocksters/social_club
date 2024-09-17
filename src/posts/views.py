@@ -2,6 +2,7 @@ from posts.models import Post, Comment
 from rest_framework import generics
 from posts.serializers import PostSerializer, CommentSerializer
 from django.shortcuts import get_object_or_404
+from posts.permissions import IsOwnerOrReadOnly
 
 
 class PostList(generics.ListCreateAPIView):
@@ -26,6 +27,8 @@ class PostDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    # Only the author can update or delete the post.
+    permission_classes = [IsOwnerOrReadOnly]
 
 
 class CommentList(generics.ListCreateAPIView):
@@ -53,3 +56,5 @@ class CommentDetail(generics.RetrieveUpdateDestroyAPIView):
 
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    # Only the author can update or delete the comment.
+    permission_classes = [IsOwnerOrReadOnly]
