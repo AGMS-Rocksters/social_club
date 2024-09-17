@@ -7,7 +7,7 @@ from rest_framework.exceptions import PermissionDenied
 class MessageList(generics.ListCreateAPIView):
     """
     This class handles listing and creating messages in our REST API.
-    - GET: List messages in communications where the user is a participant.
+    - GET: List messages in a specific communication where the user is a participant.
     - POST: Create a new message in a communication, only if the user is a participant.
     """
 
@@ -15,11 +15,26 @@ class MessageList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         """
-        Filter messages to only show messages in communications where the user is a participant.
+        Filter messages to only show messages in a specific communication where the user is a participant.
         """
-        return Message.objects.filter(
-            communication__from_user=self.request.user
-        ) | Message.objects.filter(communication__to_user=self.request.user)
+        communication_id = self.kwargs.get("communication_id")
+        if not communication_id:
+            raise PermissionDenied("Communication ID is required to list messages.")
+
+        # Retrieve the communication object
+        try:
+            communication = Communication.objects.get(id=communication_id)
+        except Communication.DoesNotExist:
+            raise PermissionDenied("Communication not found.")
+
+        # Check if the user is a participant in the communication
+        if not communication.is_participant(self.request.user):
+            raise PermissionDenied(
+                "You are not allowed to view messages in this communication."
+            )
+
+        # If the user is a participant, return the messages in the communication
+        return Message.objects.filter(communication=communication)
 
     def perform_create(self, serializer):
         """

@@ -170,13 +170,12 @@ class MessageTests(APITestCase):
             password="testpassword",
             email="test_user2@mail.com",
         )
-
         self.user3 = User.objects.create_user(
             username="testuser3",
             password="testpassword",
             email="test_user3@mail.com",
         )
-        # creat a user who is not a participant in any communication
+        # Create a user who is not a participant in any communication
         self.user4 = User.objects.create_user(
             username="testuser4",
             password="testpassword",
@@ -204,7 +203,9 @@ class MessageTests(APITestCase):
         )
 
         # URLs to access the message list and detail
-        self.message_list_url = reverse("messaging:message-list")
+        self.message_list_url = lambda communication_id: reverse(
+            "messaging:message-list", args=[communication_id]
+        )
         self.message_detail_url1 = reverse(
             "messaging:message-detail", args=[self.message1.id]
         )
@@ -223,21 +224,25 @@ class MessageTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION="Bearer " + jwt_token)
 
     def test_message_list_as_participant(self):
-        # Authenticate as user2, who is a participant in communication1 and communication2
+        # Authenticate as user2, who is a participant in communication1
         self.set_jwt_authentication(self.user2)
-        response = self.client.get(self.message_list_url)
+        # Fetch messages for communication1
+        communication_id = self.communication1.id
+        response = self.client.get(self.message_list_url(communication_id))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # User2 should see messages from both communications they are part of
-        self.assertEqual(len(response.data), 2)
+        # Check that the messages are for communication1
+        messages = Message.objects.filter(communication=self.communication1)
+        self.assertEqual(len(response.data), messages.count())
+        self.assertGreaterEqual(len(response.data), 1)
 
     def test_message_list_as_non_participant(self):
         # Authenticate as user4, who is not a participant in any communication
         self.set_jwt_authentication(self.user4)
-        response = self.client.get(self.message_list_url)
-        # This means the request was successful but no data was returned
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # User4 should not see any messages
-        self.assertEqual(response.data, [])
+        # Attempt to fetch messages for communication1 (where user4 is not a participant)
+        communication_id = self.communication1.id
+        response = self.client.get(self.message_list_url(communication_id))
+        # Since user4 is not a participant, expect a 403 Forbidden response
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_message_detail_as_participant(self):
         # Authenticate as user1, who is a participant in communication1
@@ -256,7 +261,7 @@ class MessageTests(APITestCase):
         # Authenticate as user1, who is a participant in communication1
         self.set_jwt_authentication(self.user1)
         response = self.client.post(
-            self.message_list_url,
+            self.message_list_url(self.communication1.id),
             {
                 "communication": self.communication1.id,
                 "msg": "New message for communication1",
@@ -270,7 +275,7 @@ class MessageTests(APITestCase):
         # Authenticate as user1, who is not a participant in communication2
         self.set_jwt_authentication(self.user1)
         response = self.client.post(
-            self.message_list_url,
+            self.message_list_url(self.communication2.id),
             {
                 "communication": self.communication2.id,
                 "msg": "Attempted new message for communication2",
